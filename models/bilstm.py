@@ -56,7 +56,9 @@ class BiLSTM(nn.Module):
         hypothesis = hypothesis_ht[-2:].transpose(0, 1).contiguous().view(batch.batch_size, -1)
 
         combined = torch.cat((premise, hypothesis, torch.abs(premise - hypothesis), premise * hypothesis), 1)
-        return self.out(combined)
+        x = self.out(combined)
+        print(x.size())
+        return x
 
 
 def bilstm(options):

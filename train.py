@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 
 
 import datasets
-import models
+from models import TransformerNLI
 
 from utils import *
 
@@ -25,14 +25,7 @@ class Train():
         }
         self.dataset = datasets.__dict__[self.args.dataset](dataset_options)
 
-        self.model_options = {
-            'out_dim': self.dataset.out_dim(),
-            'dp_ratio': self.args.dp_ratio,
-            'd_hidden': self.args.d_hidden,
-            'device': self.device,
-            'dataset': self.args.dataset
-        }
-        self.model = models.__dict__[self.args.model](self.model_options)
+        self.model = TransformerNLI(self.args)
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
@@ -47,10 +40,8 @@ class Train():
             self.best_val_acc = val_acc
             torch.save({
                 'accuracy': self.best_val_acc,
-                'options': self.model_options,
                 'model_dict': self.model.state_dict(),
-            }, '{}/{}/{}/best-{}-{}-params.pt'.format(self.args.results_dir, self.args.model, self.args.dataset,
-                                                      self.args.model, self.args.dataset))
+            }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
             '| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} | val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'
             .format(epoch, train_loss, train_acc, val_loss, val_acc, took))

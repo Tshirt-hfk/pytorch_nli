@@ -7,15 +7,25 @@ from argparse import ArgumentParser
 def parse_args():
     parser = ArgumentParser(description='PyTorch/torchtext NLI Baseline')
     parser.add_argument('--dataset', '-d', type=str, default='mnli')
-    parser.add_argument('--model', '-m', type=str, default='bilstm')
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--embed_dim', type=int, default=300)
-    parser.add_argument('--d_hidden', type=int, default=200)
-    parser.add_argument('--dp_ratio', type=int, default=0.2)
+    parser.add_argument('--embed_dim', type=int, default=128)
+    parser.add_argument('--num-heads', type=int, default=4)
+    parser.add_argument('--k-dim', type=int, default=32)
+    parser.add_argument('--v-dim', type=int, default=32)
+    parser.add_argument('--ffn-embed-dim', type=int, default=256)
+    parser.add_argument('--N', type=int, default=2)
+    parser.add_argument('--M', type=int, default=3)
+
+    parser.add_argument('--num_units', type=int, default=3)
+
+    parser.add_argument('--dropout', type=float, default=0.3)
+    parser.add_argument('--activation_dropout', type=float, default=0.)
+    parser.add_argument('--attention_dropout', type=float, default=0.)
+
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--combine', type=str, default='cat')
+
     parser.add_argument('--results_dir', type=str, default='results')
     return check_args(parser.parse_args())
 
@@ -25,7 +35,7 @@ def parse_args():
 
 def check_args(args):
     # --result_dir
-    check_folder(os.path.join(args.results_dir, args.model, args.dataset))
+    check_folder(os.path.join(args.results_dir, args.dataset))
 
     # --epoch
     try:
@@ -74,7 +84,7 @@ def check_folder(log_dir):
 
 def get_logger(args, phase):
     logging.basicConfig(level=logging.INFO,
-                        filename="{}/{}/{}/{}.log".format(args.results_dir, args.model, args.dataset, phase),
+                        filename="{}/{}/{}.log".format(args.results_dir, args.dataset, phase),
                         format='%(asctime)s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
     return logging.getLogger(phase)
