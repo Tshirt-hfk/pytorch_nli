@@ -291,11 +291,11 @@ class Comparison(nn.Module):
     def forward(self, encoding_1, encoding_2, interaction_1, interaction_2):
         x_1 = torch.cat([encoding_1, interaction_1], dim=-1)
         x_1 = self.fc2(torch.relu(self.fc1(x_1)))
-        x_1 = x_1.sum(dim=0) / (x_1.size(0) ** 0.5)
+        x_1 = x_1.mean(dim=0)
 
         x_2 = torch.cat([encoding_2, interaction_2], dim=-1)
         x_2 = self.fc4(torch.relu(self.fc3(x_2)))
-        x_2 = x_2.sum(dim=0) / (x_2.size(0) ** 0.5)
+        x_2 = x_2.mean(dim=0)
 
         x = torch.cat([x_1, x_2], dim=-1)
         x = self.fc6(torch.relu(self.fc5(x)))
