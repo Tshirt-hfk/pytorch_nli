@@ -2,7 +2,7 @@ import time
 import datetime
 import torch.nn as nn
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
+import tqdm
 
 
 import datasets
@@ -49,7 +49,7 @@ class Train():
         self.model.train();
         self.dataset.train_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
-        for batch_idx, batch in enumerate(self.dataset.train_iter):
+        for batch_idx, batch in tqdm(enumerate(self.dataset.train_iter)):
             self.opt.zero_grad()
             answer = self.model(batch)
             loss = self.criterion(answer, batch.label)
