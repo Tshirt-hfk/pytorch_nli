@@ -226,12 +226,10 @@ class TransformerEncoder(nn.Module):
                 attention_dropout=args.attention_dropout,
                 activation_dropout=args.activation_dropout,
                 dropout=args.dropout))
-        self.last_layer_norm = LayerNorm(args.embed_dim)
 
     def forward(self, x):
         for i in range(self.N):
             x = self.encoder_list[i](x)
-        x = self.last_layer_norm(x)
         return x
 
 
@@ -251,14 +249,10 @@ class TransformerInteraction(nn.Module):
                 attention_dropout=args.attention_dropout,
                 activation_dropout=args.activation_dropout,
                 dropout=args.dropout))
-        self.last_layer_norm = LayerNorm(args.embed_dim)
 
     def forward(self, x_1, x_2):
         for i in range(self.M):
             x_1, x_2 = self.decoder_list[i](x_1, x_2)
-        x_1 = self.last_layer_norm(x_1)
-        x_2 = self.last_layer_norm(x_2)
-
         return x_1, x_2
 
 

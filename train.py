@@ -58,7 +58,7 @@ class Train():
             n_total += batch.batch_size
             n_loss += loss.item()
 
-            loss.backward();
+            loss.backward()
             self.opt.step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
