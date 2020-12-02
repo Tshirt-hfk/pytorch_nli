@@ -21,8 +21,9 @@ def parse_args():
     parser.add_argument('--num_units', type=int, default=3)
 
     parser.add_argument('--dropout', type=float, default=0.5)
-    parser.add_argument('--activation_dropout', type=float, default=0.)
-    parser.add_argument('--attention_dropout', type=float, default=0.)
+    parser.add_argument('--embedding-dropout', type=float, default=0.)
+    parser.add_argument('--activation-dropout', type=float, default=0.)
+    parser.add_argument('--attention-dropout', type=float, default=0.)
 
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--lr', type=float, default=1e-4)

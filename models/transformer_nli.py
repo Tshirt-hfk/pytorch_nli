@@ -223,7 +223,9 @@ class TransformerEncoder(nn.Module):
                 num_heads=args.num_heads,
                 k_dim=args.k_dim,
                 v_dim=args.v_dim,
-                dropout=args.attention_dropout))
+                attention_dropout=args.attention_dropout,
+                activation_dropout=args.activation_dropout,
+                dropout=args.dropout))
         self.last_layer_norm = LayerNorm(args.embed_dim)
 
     def forward(self, x):
@@ -246,7 +248,9 @@ class TransformerInteraction(nn.Module):
                 num_heads=args.num_heads,
                 k_dim=args.k_dim,
                 v_dim=args.v_dim,
-                dropout=args.attention_dropout))
+                attention_dropout=args.attention_dropout,
+                activation_dropout=args.activation_dropout,
+                dropout=args.dropout))
         self.last_layer_norm = LayerNorm(args.embed_dim)
 
     def forward(self, x_1, x_2):
@@ -262,7 +266,7 @@ class PositionalEncoding(nn.Module):
 
     def __init__(self, embed_dim, dropout, max_len=512):
         super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout = dropout
 
         pe = torch.zeros(max_len, embed_dim)
         position = torch.arange(0., max_len).unsqueeze(1)
@@ -276,7 +280,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
         x = x + Variable(self.pe[:, :x.size(1)],
                          requires_grad=False)
-        return self.dropout(x)
+        return F.dropout(x, p=self.dropout, training=self.training)
 
 
 class Comparison(nn.Module):
@@ -314,7 +318,7 @@ class TransformerNLI(nn.Module):
 
         self.embedding_proj = nn.Linear(self.embedding.embedding_dim, args.embed_dim)
 
-        self.pe = PositionalEncoding(args.embed_dim, args.dropout)
+        self.pe = PositionalEncoding(args.embed_dim, args.embedding_dropout)
 
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)
