@@ -13,7 +13,7 @@ __all__ = ['multinli']
 class MultiNLI():
     def __init__(self, options):
         print("preparing the dataset for training...")
-        self.TEXT = Field(lower=True, tokenize='spacy', batch_first=True)
+        self.TEXT = Field(lower=True, tokenize='spacy', tokenizer_language='en_core_web_sm', batch_first=True)
         self.LABEL = Field(sequential=False, unk_token=None, is_target=True)
 
         # Since MNLI does not provide public test data

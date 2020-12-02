@@ -11,7 +11,7 @@ __all__ = ['snli']
 
 class SNLI():
     def __init__(self, options):
-        self.TEXT = Field(lower=True, tokenize='spacy', batch_first=True)
+        self.TEXT = Field(lower=True, tokenize='spacy', tokenizer_language='en_core_web_sm', batch_first=True)
         self.LABEL = Field(sequential=False, unk_token=None, is_target=True)
 
         self.train, self.dev, self.test = datasets.SNLI.splits(self.TEXT, self.LABEL)
