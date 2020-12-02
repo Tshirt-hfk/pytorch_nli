@@ -183,16 +183,12 @@ class TransformerInteractionLayer(nn.Module):
 
         residual_1 = x_1
         residual_2 = x_2
-
         y_1, _ = self.encoder_attn(query=x_1, key=x_2, value=x_2)
         y_1 = F.dropout(y_1, p=self.dropout, training=self.training)
-
         y_2, _ = self.encoder_attn(query=x_2, key=x_1, value=x_1)
         y_2 = F.dropout(y_2, p=self.dropout, training=self.training)
-
         x_1 = residual_1 + y_1
         x_2 = residual_2 + y_2
-
         x_1 = self.encoder_attn_layer_norm(x_1)
         x_2 = self.encoder_attn_layer_norm(x_2)
 
