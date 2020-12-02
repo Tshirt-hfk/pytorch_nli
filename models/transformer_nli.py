@@ -323,6 +323,6 @@ class TransformerNLI(nn.Module):
         x_2 = self.pe(self.embedding_proj(self.embedding(x.hypothesis))).transpose(0, 1)
         encoding_1 = self.encoder(x_1)
         encoding_2 = self.encoder(x_2)
-        interaction_1, interaction_2 = self.interaction(x_1, x_2)
+        interaction_1, interaction_2 = self.interaction(encoding_1, encoding_2)
         y = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
         return y
