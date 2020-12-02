@@ -104,23 +104,24 @@ class PositionwiseFeedForward(nn.Module):
 
 class TransformerEncoderLayer(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, embed_dim, ffn_embed_dim, num_heads, k_dim=None, v_dim=None,
+                 attention_dropout=0., activation_dropout=0., dropout=0.):
         super(TransformerEncoderLayer, self).__init__()
         self.self_attn = MultiHeadedAttention(
-            embed_dim=args.embed_dim,
-            num_heads=args.num_heads,
-            k_dim=args.k_dim,
-            v_dim=args.v_dim,
-            dropout=args.attention_dropout
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            k_dim=k_dim,
+            v_dim=v_dim,
+            dropout=attention_dropout
         )
-        self.self_attn_layer_norm = LayerNorm(args.embed_dim)
+        self.self_attn_layer_norm = LayerNorm(embed_dim)
         self.ffn = PositionwiseFeedForward(
-            embed_dim=args.embed_dim,
-            ffn_embed_dim=args.ffn_embed_dim,
-            dropout=args.activation_dropout
+            embed_dim=embed_dim,
+            ffn_embed_dim=ffn_embed_dim,
+            dropout=activation_dropout
         )
-        self.ffn_layer_norm = LayerNorm(args.embed_dim)
-        self.dropout = args.dropout
+        self.ffn_layer_norm = LayerNorm(embed_dim)
+        self.dropout = dropout
 
     def forward(self, x, mask=None):
         residual = x
@@ -138,59 +139,128 @@ class TransformerEncoderLayer(nn.Module):
         return x
 
 
-class TransformerDecoderLayer(nn.Module):
+class TransformerInteractionLayer(nn.Module):
+
+    def __init__(self, embed_dim, ffn_embed_dim, num_heads, k_dim=None, v_dim=None,
+                 attention_dropout=0., activation_dropout=0., dropout=0.):
+        super(TransformerInteractionLayer, self).__init__()
+        self.self_attn = MultiHeadedAttention(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            k_dim=k_dim,
+            v_dim=v_dim,
+            dropout=attention_dropout
+        )
+        self.self_attn_layer_norm = LayerNorm(embed_dim)
+        self.encoder_attn = MultiHeadedAttention(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            k_dim=k_dim,
+            v_dim=v_dim,
+            dropout=attention_dropout
+        )
+        self.encoder_attn_layer_norm = LayerNorm(embed_dim)
+        self.ffn = PositionwiseFeedForward(
+            embed_dim=embed_dim,
+            ffn_embed_dim=ffn_embed_dim,
+            dropout=activation_dropout
+        )
+        self.ffn_layer_norm = LayerNorm(embed_dim)
+        self.dropout = dropout
+
+    def forward(self, x_1, x_2):
+        residual = x_1
+        x_1 = self.self_attn_layer_norm(x_1)
+        x_1, _ = self.self_attn(query=x_1, key=x_1, value=x_1)
+        x_1 = F.dropout(x_1, p=self.dropout, training=self.training)
+        x_1 = residual + x_1
+
+        residual = x_2
+        x_2 = self.self_attn_layer_norm(x_2)
+        x_2, _ = self.self_attn(query=x_2, key=x_2, value=x_2)
+        x_2 = F.dropout(x_2, p=self.dropout, training=self.training)
+        x_2 = residual + x_2
+
+        residual_1 = x_1
+        residual_2 = x_2
+        x_1 = self.encoder_attn_layer_norm(x_1)
+        x_2 = self.encoder_attn_layer_norm(x_2)
+
+        y_1, _ = self.encoder_attn(query=x_1, key=x_2, value=x_2)
+        y_1 = F.dropout(y_1, p=self.dropout, training=self.training)
+
+        y_2, _ = self.encoder_attn(query=x_2, key=x_1, value=x_1)
+        y_2 = F.dropout(y_2, p=self.dropout, training=self.training)
+
+        x_1 = residual_1 + y_1
+        x_2 = residual_2 + y_2
+
+        residual = x_1
+        x_1 = self.ffn_layer_norm(x_1)
+        x_1 = self.ffn(x_1)
+        x_1 = F.dropout(x_1, p=self.dropout, training=self.training)
+        x_1 = residual + x_1
+
+        residual = x_2
+        x_2 = self.ffn_layer_norm(x_2)
+        x_2 = self.ffn(x_2)
+        x_2 = F.dropout(x_2, p=self.dropout, training=self.training)
+        x_2 = residual + x_2
+
+        return x_1, x_2
+
+
+class TransformerEncoder(nn.Module):
 
     def __init__(self, args):
-        super(TransformerDecoderLayer, self).__init__()
-        self.self_attn = MultiHeadedAttention(
-            embed_dim=args.embed_dim,
-            num_heads=args.num_heads,
-            k_dim=args.k_dim,
-            v_dim=args.v_dim,
-            dropout=args.attention_dropout
-        )
-        self.self_attn_layer_norm = LayerNorm(args.embed_dim)
-        self.encoder_attn = MultiHeadedAttention(
-            embed_dim=args.embed_dim,
-            num_heads=args.num_heads,
-            k_dim=args.k_dim,
-            v_dim=args.v_dim,
-            dropout=args.attention_dropout
-        )
-        self.encoder_attn_layer_norm = LayerNorm(args.embed_dim)
-        self.ffn = PositionwiseFeedForward(
-            embed_dim=args.embed_dim,
-            ffn_embed_dim=args.ffn_embed_dim,
-            dropout=args.activation_dropout
-        )
-        self.ffn_layer_norm = LayerNorm(args.embed_dim)
-        self.dropout = args.dropout
+        super(TransformerEncoder, self).__init__()
+        self.N = args.N
+        self.encoder_list = nn.ModuleList()
+        for i in range(self.N):
+            self.encoder_list.append(TransformerEncoderLayer(
+                embed_dim=args.embed_dim,
+                ffn_embed_dim=args.ffn_embed_dim,
+                num_heads=args.num_heads,
+                k_dim=args.k_dim,
+                v_dim=args.v_dim,
+                dropout=args.attention_dropout))
+        self.last_layer_norm = LayerNorm(args.embed_dim)
 
-    def forward(self, x,  encoder_out, mask=None):
-        residual = x
-        x = self.self_attn_layer_norm(x)
-        x, _ = self.self_attn(query=x, key=x, value=x, mask=mask)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = residual + x
-
-        residual = x
-        x = self.encoder_attn_layer_norm(x)
-        x, _ = self.encoder_attn(query=x, key=encoder_out, value=encoder_out, mask=mask)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = residual + x
-
-        residual = x
-        x = self.ffn_layer_norm(x)
-        x = self.ffn(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = residual + x
-
+    def forward(self, x):
+        for i in range(self.N):
+            x = self.encoder_list[i](x)
+        x = self.last_layer_norm(x)
         return x
+
+
+class TransformerInteraction(nn.Module):
+
+    def __init__(self, args):
+        super(TransformerInteraction, self).__init__()
+        self.M = args.M
+        self.decoder_list = nn.ModuleList()
+        for i in range(self.M):
+            self.decoder_list.append(TransformerInteractionLayer(
+                embed_dim=args.embed_dim,
+                ffn_embed_dim=args.ffn_embed_dim,
+                num_heads=args.num_heads,
+                k_dim=args.k_dim,
+                v_dim=args.v_dim,
+                dropout=args.attention_dropout))
+        self.last_layer_norm = LayerNorm(args.embed_dim)
+
+    def forward(self, x_1, x_2):
+        for i in range(self.M):
+            x_1, x_2 = self.decoder_list[i](x_1, x_2)
+        x_1 = self.last_layer_norm(x_1)
+        x_2 = self.last_layer_norm(x_2)
+
+        return x_1, x_2
 
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, embed_dim, dropout, max_len=5000):
+    def __init__(self, embed_dim, dropout, max_len=512):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -213,11 +283,11 @@ class Comparison(nn.Module):
 
     def __init__(self, embed_dim, num_units):
         super(Comparison, self).__init__()
-        self.fc1 = nn.Linear(embed_dim*2, embed_dim)
+        self.fc1 = nn.Linear(embed_dim * 2, embed_dim)
         self.fc2 = nn.Linear(embed_dim, embed_dim)
-        self.fc3 = nn.Linear(embed_dim*2, embed_dim)
+        self.fc3 = nn.Linear(embed_dim * 2, embed_dim)
         self.fc4 = nn.Linear(embed_dim, embed_dim)
-        self.fc5 = nn.Linear(embed_dim*2, embed_dim)
+        self.fc5 = nn.Linear(embed_dim * 2, embed_dim)
         self.fc6 = nn.Linear(embed_dim, num_units)
 
     def forward(self, encoding_1, encoding_2, interaction_1, interaction_2):
@@ -246,32 +316,15 @@ class TransformerNLI(nn.Module):
 
         self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
-        self.N = args.N
-        self.M = args.M
-        self.encoder = nn.ModuleList()
-        for i in range(self.N):
-            self.encoder.append(TransformerEncoderLayer(args))
-        self.interaction = nn.ModuleList()
-        for i in range(self.M):
-            self.interaction.append(TransformerDecoderLayer(args))
-
+        self.encoder = TransformerEncoder(args)
+        self.interaction = TransformerInteraction(args)
         self.comparison = Comparison(args.embed_dim, args.num_units)
 
     def forward(self, x):
-        encoding_1 = self.pe(self.embedding_proj(self.embedding(x.premise))).transpose(0, 1)
-        encoding_2 = self.pe(self.embedding_proj(self.embedding(x.hypothesis))).transpose(0, 1)
-        for i in range(self.N):
-            encoding_1 = self.encoder[i](encoding_1)
-            encoding_2 = self.encoder[i](encoding_2)
-        interaction_1 = encoding_1
-        interaction_2 = encoding_2
-        for i in range(self.N):
-            interaction_1 = self.interaction[i](interaction_1, interaction_2)
-            interaction_2 = self.interaction[i](interaction_2, interaction_1)
-        x = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
-        return x
-
-
-
-
-
+        x_1 = self.pe(self.embedding_proj(self.embedding(x.premise))).transpose(0, 1)
+        x_2 = self.pe(self.embedding_proj(self.embedding(x.hypothesis))).transpose(0, 1)
+        encoding_1 = self.encoder(x_1)
+        encoding_2 = self.encoder(x_2)
+        interaction_1, interaction_2 = self.interaction(x_1, x_2)
+        y = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
+        return y
