@@ -2,7 +2,7 @@ import time
 import datetime
 import torch.nn as nn
 from torch import optim
-import tqdm
+from tqdm import tqdm
 
 
 import datasets
@@ -46,7 +46,7 @@ class Train():
             .format(epoch, train_loss, train_acc, val_loss, val_acc, took))
 
     def train(self):
-        self.model.train();
+        self.model.train()
         self.dataset.train_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
         for batch_idx, batch in tqdm(enumerate(self.dataset.train_iter)):
@@ -65,7 +65,7 @@ class Train():
         return train_loss, train_acc
 
     def validate(self):
-        self.model.eval();
+        self.model.eval()
         self.dataset.dev_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
         with torch.no_grad():
