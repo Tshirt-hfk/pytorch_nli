@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument('--attention_dropout', type=float, default=0.)
 
     parser.add_argument('--epochs', type=int, default=20)
-    parser.add_argument('--lr', type=float, default=0.0001)
+    parser.add_argument('--lr', type=float, default=4e-5)
 
     parser.add_argument('--results_dir', type=str, default='results')
     return check_args(parser.parse_args())

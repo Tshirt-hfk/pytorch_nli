@@ -31,7 +31,6 @@ class Train():
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.opt = optim.Adam(self.model.parameters(), lr=self.args.lr)
         self.best_val_acc = None
-        self.scheduler = StepLR(self.opt, step_size=5, gamma=0.5)
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
 
@@ -90,7 +89,6 @@ class Train():
 
             train_loss, train_acc = self.train()
             val_loss, val_acc = self.validate()
-            self.scheduler.step()
 
             took = time.time() - start
             self.result_checkpoint(epoch, train_loss, val_loss, train_acc, val_acc, took)
