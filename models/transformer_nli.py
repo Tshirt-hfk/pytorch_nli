@@ -312,7 +312,7 @@ class TransformerNLI(nn.Module):
 
         self.embedding_proj = nn.Linear(self.embedding.embedding_dim, args.embed_dim)
 
-        self.pe = PositionalEncoding(args.embed_dim, args.embedding_dropout)
+        self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)

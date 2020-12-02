@@ -29,7 +29,7 @@ class Train():
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
-        self.opt = optim.Adam(self.model.parameters(), lr=self.args.lr)
+        self.opt = optim.AdamW(self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
