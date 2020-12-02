@@ -36,21 +36,21 @@ python -m spacy download en
 
 ## Training
 ```shell
-  # Training a BiLSTM model on snli dataset
+  # Training a model on snli dataset
   python train.py -d snli
   
-  # Training a BiLSTM model on multinli dataset
+  # Training a model on multinli dataset
   python train.py -d multinli
 ```
 * Training script will create log, training.log which can be found in results_dir(default: results).
 * In the first run it will take quite bit time(approx: 30 mins) because the script will download the dataset and Glove word vector. For the subsequent runs it will use the saved dataset and word vector so it will be fast.
 ## Evaluation
 ```shell
-  # Evaluating a trained BiLSTM model on snli dataset
-  python evaluate.py -m bilstm -d snli
+  # Evaluating a trained model on snli dataset
+  python evaluate.pym -d snli
   
-  # Evalauting a trained BiLSTM model on multinli dataset
-  python evaluate.py -m bilstm -d multinli
+  # Evalauting a trained model on multinli dataset
+  python evaluate.py -d multinli
 ```
 * Evaluation script will print and log(evaluation.log can be found in results_dir) following metrics:
 #### Accuracy
