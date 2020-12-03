@@ -88,11 +88,11 @@ python -m spacy download en
 ```shell
 # Download and use the pretrained BiLSTM model on SNLI dataset
 python scripts/download_pretrained.py -m bilstm -d snli
-python evaluate.py -m bilstm -d snli
+python evaluate.py -d snli
 
 # Download and use the pretrained BiLSTM model on MultiNLI dataset
 python scripts/download_pretrained.py -m bilstm -d multinli
-python evaluate.py -m bilstm -d multinli
+python evaluate.py -d multinli
 ```
 
 ## Contribution Note
