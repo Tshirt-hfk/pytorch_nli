@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument('--num-heads', type=int, default=4)
     parser.add_argument('--k-dim', type=int, default=32)
     parser.add_argument('--v-dim', type=int, default=32)
-    parser.add_argument('--ffn-embed-dim', type=int, default=256)
+    parser.add_argument('--ffn-embed-dim', type=int, default=128)
     parser.add_argument('--N', type=int, default=3)
     parser.add_argument('--M', type=int, default=2)
 
@@ -25,7 +25,9 @@ def parse_args():
     parser.add_argument('--attention-dropout', type=float, default=0.)
 
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--lr', type=float, default=3e-4)
+    parser.add_argument('--min-lr', type=float, default=4e-5)
+    parser.add_argument('--max-lr', type=float, default=3e-4)
+    parser.add_argument('--step-size', type=int, default=10)
     parser.add_argument('--weight-decay', type=float, default=1/600)
 
     parser.add_argument('--results_dir', type=str, default='results')

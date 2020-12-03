@@ -269,7 +269,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + Variable(self.pe[:, :x.size(1)],
+        x = x + Variable(self.pe[:, :x.size(0)],
                          requires_grad=False)
         return F.dropout(x, p=self.dropout, training=self.training)
 
@@ -281,9 +281,7 @@ class Comparison(nn.Module):
         self.fc1 = nn.Linear(embed_dim * 2, embed_dim)
         self.fc2 = nn.Linear(embed_dim, embed_dim)
         self.fc3 = nn.Linear(embed_dim * 2, embed_dim)
-        self.fc4 = nn.Linear(embed_dim, embed_dim)
-        self.fc5 = nn.Linear(embed_dim * 2, embed_dim)
-        self.fc6 = nn.Linear(embed_dim, num_units)
+        self.fc4 = nn.Linear(embed_dim, num_units)
 
     def forward(self, encoding_1, encoding_2, interaction_1, interaction_2):
         x_1 = torch.cat([encoding_1, interaction_1], dim=-1)
@@ -291,11 +289,11 @@ class Comparison(nn.Module):
         x_1 = x_1.sum(dim=0) / (x_1.size(0) ** 0.5)
 
         x_2 = torch.cat([encoding_2, interaction_2], dim=-1)
-        x_2 = self.fc4(torch.relu(self.fc3(x_2)))
+        x_2 = self.fc2(torch.relu(self.fc1(x_2)))
         x_2 = x_2.sum(dim=0) / (x_2.size(0) ** 0.5)
 
         x = torch.cat([x_1, x_2], dim=-1)
-        x = self.fc6(torch.relu(self.fc5(x)))
+        x = self.fc4(torch.relu(self.fc3(x)))
         return x
 
 
@@ -316,10 +314,12 @@ class TransformerNLI(nn.Module):
         self.comparison = Comparison(args.embed_dim, args.num_units)
 
     def forward(self, x):
-        x_1 = self.pe(self.embedding_proj(self.embedding(x.premise))).transpose(0, 1)
-        x_2 = self.pe(self.embedding_proj(self.embedding(x.hypothesis))).transpose(0, 1)
+        x_1 = self.pe(self.embedding_proj(self.embedding(x.premise)).transpose(0, 1))
+        x_2 = self.pe(self.embedding_proj(self.embedding(x.hypothesis)).transpose(0, 1))
         encoding_1 = self.encoder(x_1)
         encoding_2 = self.encoder(x_2)
+        encoding_1 = self.pe(encoding_1)
+        encoding_2 = self.pe(encoding_2)
         interaction_1, interaction_2 = self.interaction(encoding_1, encoding_2)
         y = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
         return y

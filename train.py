@@ -29,7 +29,9 @@ class Train():
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
-        self.opt = optim.AdamW(self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+        self.opt = optim.AdamW(self.model.parameters(), lr=self.args.min_lr, weight_decay=self.args.weight_decay)
+        self.lr_scheduler = torch.optim.lr_scheduler.CyclicLR(self.opt, base_lr=self.args.min_lr, max_lr=self.args.max_lr,
+                                                              step_size_up=self.args.step_size * len(self.dataset.train_iter))
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
@@ -40,6 +42,7 @@ class Train():
             torch.save({
                 'accuracy': self.best_val_acc,
                 'model_dict': self.model.state_dict(),
+                'lr_scheduler' : self.lr_scheduler.state_dict(),
             }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
             '| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} | val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'
