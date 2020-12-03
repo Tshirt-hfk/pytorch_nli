@@ -31,8 +31,6 @@ class Train():
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.opt = optim.AdamW(self.model.parameters(), lr=self.args.min_lr, weight_decay=self.args.weight_decay)
-        self.lr_scheduler = CyclicLRWithRestarts(self.opt, self.args.batch_size, len(self.dataset.train_iter),
-                                                 restart_period=self.args.restart_period, t_mult=1.2, policy="cosine")
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
@@ -52,7 +50,6 @@ class Train():
         self.model.train()
         self.dataset.train_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
-        self.lr_scheduler.step()
         for batch_idx, batch in tqdm(enumerate(self.dataset.train_iter)):
             self.opt.zero_grad()
             answer = self.model(batch)
@@ -64,7 +61,6 @@ class Train():
 
             loss.backward()
             self.opt.step()
-            self.lr_scheduler.batch_step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
         return train_loss, train_acc
