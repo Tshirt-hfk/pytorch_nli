@@ -66,16 +66,16 @@ class MultiHeadedAttention(nn.Module):
             mask = mask.unsqueeze(0)
             attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
 
-        d = math.log(100 / 2 - 1)
-        if self.training:
-            noise = -torch.empty_like(attn_weights).exponential_().log()
-            attn_weights_noise = attn_weights + noise
-            attn_weights_max = attn_weights_noise.max(dim=-1, keepdim=True)[0]
-            mask = attn_weights_noise < (attn_weights_max - d)
-        else:
-            attn_weights_max = attn_weights.max(dim=-1, keepdim=True)[0]
-            mask = attn_weights < (attn_weights_max - d)
-        attn_weights = attn_weights.masked_fill(mask, float("-inf"))
+        # d = math.log(100 / 2 - 1)
+        # if self.training:
+        #     noise = -torch.empty_like(attn_weights).exponential_().log()
+        #     attn_weights_noise = attn_weights + noise
+        #     attn_weights_max = attn_weights_noise.max(dim=-1, keepdim=True)[0]
+        #     mask = attn_weights_noise < (attn_weights_max - d)
+        # else:
+        #     attn_weights_max = attn_weights.max(dim=-1, keepdim=True)[0]
+        #     mask = attn_weights < (attn_weights_max - d)
+        # attn_weights = attn_weights.masked_fill(mask, float("-inf"))
 
         attn_weights = torch.softmax(attn_weights, dim=-1)
         attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
