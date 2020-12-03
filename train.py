@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 
 import datasets
-from cycle_scheduler import CyclicLRWithRestarts
 from models import TransformerNLI
 
 from utils import *
