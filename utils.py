@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--weight-decay', type=float, default=1e-3)
 
-    parser.add_argument('--results_dir', type=str, default='results')
+    parser.add_argument('--results-dir', type=str, default='results')
     return check_args(parser.parse_args())
 
 
