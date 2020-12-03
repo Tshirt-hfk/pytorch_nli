@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 
 import datasets
+from cycle_scheduler import CyclicLRWithRestarts
 from models import TransformerNLI
 
 from utils import *
@@ -30,8 +31,8 @@ class Train():
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.opt = optim.AdamW(self.model.parameters(), lr=self.args.min_lr, weight_decay=self.args.weight_decay)
-        self.lr_scheduler = torch.optim.lr_scheduler.CyclicLR(self.opt, base_lr=self.args.min_lr, max_lr=self.args.max_lr,
-                                                              step_size_up=self.args.step_size * len(self.dataset.train_iter))
+        self.lr_scheduler = CyclicLRWithRestarts(self.opt, self.args.batch_size, len(self.dataset.train_iter),
+                                                 restart_period=self.args.restart_period, t_mult=1.2, policy="cosine")
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
@@ -42,7 +43,6 @@ class Train():
             torch.save({
                 'accuracy': self.best_val_acc,
                 'model_dict': self.model.state_dict(),
-                'lr_scheduler' : self.lr_scheduler.state_dict(),
             }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
             '| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} | val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'
@@ -52,6 +52,7 @@ class Train():
         self.model.train()
         self.dataset.train_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
+        self.lr_scheduler.step()
         for batch_idx, batch in tqdm(enumerate(self.dataset.train_iter)):
             self.opt.zero_grad()
             answer = self.model(batch)
@@ -63,6 +64,7 @@ class Train():
 
             loss.backward()
             self.opt.step()
+            self.lr_scheduler.batch_step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
         return train_loss, train_acc
