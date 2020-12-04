@@ -66,7 +66,7 @@ class MultiHeadedAttention(nn.Module):
             mask = mask.unsqueeze(0)
             attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
 
-        d = math.log(100 / 5 - 1)
+        d = math.log(100 / 2 - 1)
         if self.training:
             noise = -torch.empty_like(attn_weights).exponential_().log()
             attn_weights_noise = attn_weights + noise
