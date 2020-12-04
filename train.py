@@ -41,8 +41,8 @@ class Train():
                 'model_dict': self.model.state_dict(),
             }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
-            '| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} '
-            '| val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'
+            '| Epoch {:3d} | train loss {:5.3f} | train acc {:5.3f} '
+            '| val loss {:5.3f} | val acc {:5.3f} | time: {:5.3f}s |'
             .format(epoch, train_loss, train_acc, val_loss, val_acc, took))
 
     def train(self):
@@ -92,8 +92,8 @@ class Train():
             took = time.time() - start
             self.result_checkpoint(epoch, train_loss, val_loss, train_acc, val_acc, took)
 
-            print('| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} '
-                  '| val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'.
+            print('| Epoch {:3d} | train loss {:5.3f} | train acc {:5.3f} '
+                  '| val loss {:5.3f} | val acc {:5.3f} | time: {:5.3f}s |'.
                   format(epoch, train_loss, train_acc, val_loss, val_acc, took))
         self.finish()
 
