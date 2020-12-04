@@ -8,7 +8,7 @@ def parse_args():
     parser = ArgumentParser(description='PyTorch/torchtext NLI Baseline')
     parser.add_argument('--dataset', '-d', type=str, default='mnli')
     parser.add_argument('--gpu', type=int, default=0)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=64)
 
     parser.add_argument('--embed_dim', type=int, default=128)
     parser.add_argument('--num-heads', type=int, default=4)
@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument('--activation-dropout', type=float, default=0.)
     parser.add_argument('--attention-dropout', type=float, default=0.)
 
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--weight-decay', type=float, default=1e-3)
 

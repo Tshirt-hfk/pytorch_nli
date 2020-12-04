@@ -267,8 +267,9 @@ class TransformerInteraction(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, embed_dim, max_len=512):
+    def __init__(self, embed_dim, dropout=0., max_len=512):
         super(PositionalEncoding, self).__init__()
+        self.dropout = dropout
         pe = torch.zeros(max_len, embed_dim)
         position = torch.arange(0., max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0., embed_dim, 2) *
@@ -281,6 +282,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
         x = x + Variable(self.pe[:x.size(0), :],
                          requires_grad=False)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
 
@@ -314,7 +316,7 @@ class Embedding(nn.Module):
         self.lut = nn.Embedding.from_pretrained(
             torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
         self.lut_proj = nn.Linear(self.lut.embedding_dim, args.embed_dim)
-        self.pe = PositionalEncoding(args.embed_dim)
+        self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, premise, hypothesis):
         premise = self.lut_proj(self.lut(premise)).transpose(0, 1)
