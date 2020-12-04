@@ -311,6 +311,7 @@ class Comparison(nn.Module):
 class Embedding(nn.Module):
 
     def __init__(self, args):
+        super(Embedding, self).__init__()
         self.lut = nn.Embedding.from_pretrained(
             torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
         self.embedding_proj = nn.Linear(self.embedding.embedding_dim, args.embed_dim)
