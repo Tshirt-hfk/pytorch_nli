@@ -313,13 +313,10 @@ class Embedding(nn.Module):
         self.lut = nn.Embedding.from_pretrained(
             torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
         self.lut_proj = nn.Linear(self.lut.embedding_dim, args.embed_dim)
-        self.pe = PositionalEncoding(args.embed_dim)
 
     def forward(self, premise, hypothesis):
         premise = self.lut_proj(self.lut(premise)).transpose(0, 1)
         hypothesis = self.lut_proj(self.lut(hypothesis)).transpose(0, 1)
-        premise = self.pe(premise)
-        hypothesis = self.pe(hypothesis)
         return premise, hypothesis
 
 
@@ -328,14 +325,23 @@ class TransformerNLI(nn.Module):
     def __init__(self, args):
         super(TransformerNLI, self).__init__()
         self.embedding = Embedding(args)
+        self.pe = PositionalEncoding(args.embed_dim)
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)
         self.comparison = Comparison(args.embed_dim, args.num_units)
 
     def forward(self, x):
-        x_1, x_2 = self.embedding(x.premise, x.hypothesis)
-        encoding_1 = self.encoder(x_1)
-        encoding_2 = self.encoder(x_2)
+        premise, hypothesis = self.embedding(x.premise, x.hypothesis)
+
+        premise = self.pe(premise)
+        hypothesis = self.pe(hypothesis)
+
+        encoding_1 = self.encoder(premise)
+        encoding_2 = self.encoder(hypothesis)
+
+        encoding_1 = self.pe(encoding_1)
+        encoding_2 = self.pe(encoding_2)
+
         interaction_1, interaction_2 = self.interaction(encoding_1, encoding_2)
         y = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
         return y
