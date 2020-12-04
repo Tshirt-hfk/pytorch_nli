@@ -314,12 +314,12 @@ class Embedding(nn.Module):
         super(Embedding, self).__init__()
         self.lut = nn.Embedding.from_pretrained(
             torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
-        self.embedding_proj = nn.Linear(self.embedding.embedding_dim, args.embed_dim)
+        self.lut_proj = nn.Linear(self.lut.embedding_dim, args.embed_dim)
         self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, premise, hypothesis):
-        premise = self.embedding_proj(self.embedding(premise)).transpose(0, 1)
-        hypothesis = self.embedding_proj(self.embedding(hypothesis)).transpose(0, 1)
+        premise = self.lut_proj(self.lut(premise)).transpose(0, 1)
+        hypothesis = self.lut_proj(self.lut(hypothesis)).transpose(0, 1)
         premise = self.pe(premise)
         hypothesis = self.pe(hypothesis)
         return premise, hypothesis
