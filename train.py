@@ -29,7 +29,10 @@ class Train():
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
-        self.opt = optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+        self.opt = optim.AdamW(self.model.parameters(), lr=self.args.base_lr, weight_decay=self.args.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.opt, base_lr=self.args.base_lr, max_lr=self.args.max_lr,
+                                                           step_size_up=self.args.t*len(self.dataset.train_iter),
+                                                           cycle_momentum=False)
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
@@ -40,6 +43,7 @@ class Train():
             torch.save({
                 'accuracy': self.best_val_acc,
                 'model_dict': self.model.state_dict(),
+                'scheduler': self.scheduler.state_dict(),
             }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
             '| Epoch {:3d} | train loss {:5.2f} | train acc {:5.2f} | val loss {:5.2f} | val acc {:5.2f} | time: {:5.2f}s |'
@@ -57,8 +61,8 @@ class Train():
             n_correct += (torch.max(answer, 1)[1].view(batch.label.size()) == batch.label).sum().item()
             n_total += batch.batch_size
             n_loss += loss.item()
-
             loss.backward()
+            self.scheduler.step()
             self.opt.step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
