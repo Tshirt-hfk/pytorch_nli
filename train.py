@@ -61,7 +61,7 @@ class Train():
             n_loss += loss.item()
             loss.backward()
             self.opt.step()
-            self.scheduler.step()
+        self.scheduler.step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
         return train_loss, train_acc
