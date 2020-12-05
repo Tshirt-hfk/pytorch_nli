@@ -29,6 +29,7 @@ class Train():
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.opt = optim.Adam(self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+        self.scheduler = optim.lr_scheduler.StepLR(self.opt, step_size=10, gamma=0.5)
         self.best_val_acc = None
 
         print("resource preparation done: {}".format(datetime.datetime.now()))
@@ -39,6 +40,7 @@ class Train():
             torch.save({
                 'accuracy': self.best_val_acc,
                 'model_dict': self.model.state_dict(),
+                'scheduler': self.scheduler.state_dict(),
             }, '{}/{}/best-{}-params.pt'.format(self.args.results_dir, self.args.dataset, self.args.dataset))
         self.logger.info(
             '| Epoch {:3d} | train loss {:5.3f} | train acc {:5.3f} '
@@ -59,6 +61,7 @@ class Train():
             n_loss += loss.item()
             loss.backward()
             self.opt.step()
+            self.scheduler.step()
         train_loss = n_loss / n_total
         train_acc = 100. * n_correct / n_total
         return train_loss, train_acc
