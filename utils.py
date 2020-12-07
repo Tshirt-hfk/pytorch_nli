@@ -8,7 +8,7 @@ def parse_args():
     parser = ArgumentParser(description='PyTorch/torchtext NLI Baseline')
     parser.add_argument('--dataset', '-d', type=str, default='mnli')
     parser.add_argument('--gpu', type=int, default=0)
-    parser.add_argument('--batch_size', type=int, default=512)
+    parser.add_argument('--batch_size', type=int, default=64)
 
     parser.add_argument('--embed_dim', type=int, default=128)
     parser.add_argument('--num-heads', type=int, default=4)
