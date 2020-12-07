@@ -287,12 +287,12 @@ class PositionalEncoding(nn.Module):
 
 class Comparison(nn.Module):
 
-    def __init__(self, embed_dim, num_units):
+    def __init__(self, args):
         super(Comparison, self).__init__()
-        self.fc1 = nn.Linear(embed_dim * 2, embed_dim)
-        self.fc2 = nn.Linear(embed_dim, embed_dim)
-        self.fc3 = nn.Linear(embed_dim * 2, embed_dim)
-        self.fc4 = nn.Linear(embed_dim, num_units)
+        self.fc1 = nn.Linear(args.embed_dim * 2, args.embed_dim)
+        self.fc2 = nn.Linear(args.embed_dim, args.embed_dim)
+        self.fc3 = nn.Linear(args.embed_dim * 2, args.embed_dim)
+        self.fc4 = nn.Linear(args.embed_dim, args.num_units)
 
     def forward(self, encoding_1, encoding_2, interaction_1, interaction_2):
         x_1 = torch.cat([encoding_1, interaction_1], dim=-1)
@@ -332,7 +332,7 @@ class TransformerNLI(nn.Module):
         self.embedding = Embedding(args)
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)
-        self.comparison = Comparison(args.embed_dim, args.num_units)
+        self.comparison = Comparison(args)
 
     def forward(self, x):
         premise, hypothesis = self.embedding(x.premise, x.hypothesis)
