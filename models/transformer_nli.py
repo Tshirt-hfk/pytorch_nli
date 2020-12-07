@@ -136,16 +136,17 @@ class TransformerEncoderLayer(nn.Module):
 
     def forward(self, x, mask=None):
         residual = x
+        x = self.self_attn_layer_norm(x)
         x, _ = self.self_attn(query=x, key=x, value=x, mask=mask)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = residual + x
-        x = self.self_attn_layer_norm(x)
 
         residual = x
+        x = self.ffn_layer_norm(x)
         x = self.ffn(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = residual + x
-        x = self.ffn_layer_norm(x)
+
         return x
 
 
@@ -180,39 +181,39 @@ class TransformerInteractionLayer(nn.Module):
 
     def forward(self, x_1, x_2):
         residual = x_1
+        x_1 = self.self_attn_layer_norm(x_1)
         x_1, _ = self.self_attn(query=x_1, key=x_1, value=x_1)
         x_1 = F.dropout(x_1, p=self.dropout, training=self.training)
         x_1 = residual + x_1
-        x_1 = self.self_attn_layer_norm(x_1)
 
         residual = x_2
+        x_2 = self.self_attn_layer_norm(x_2)
         x_2, _ = self.self_attn(query=x_2, key=x_2, value=x_2)
         x_2 = F.dropout(x_2, p=self.dropout, training=self.training)
         x_2 = residual + x_2
-        x_2 = self.self_attn_layer_norm(x_2)
 
         residual_1 = x_1
         residual_2 = x_2
+        x_1 = self.encoder_attn_layer_norm(x_1)
+        x_2 = self.encoder_attn_layer_norm(x_2)
         y_1, _ = self.encoder_attn(query=x_1, key=x_2, value=x_2)
         y_1 = F.dropout(y_1, p=self.dropout, training=self.training)
         y_2, _ = self.encoder_attn(query=x_2, key=x_1, value=x_1)
         y_2 = F.dropout(y_2, p=self.dropout, training=self.training)
         x_1 = residual_1 + y_1
         x_2 = residual_2 + y_2
-        x_1 = self.encoder_attn_layer_norm(x_1)
-        x_2 = self.encoder_attn_layer_norm(x_2)
 
         residual = x_1
+        x_1 = self.ffn_layer_norm(x_1)
         x_1 = self.ffn(x_1)
         x_1 = F.dropout(x_1, p=self.dropout, training=self.training)
         x_1 = residual + x_1
-        x_1 = self.ffn_layer_norm(x_1)
 
         residual = x_2
+        x_2 = self.ffn_layer_norm(x_2)
         x_2 = self.ffn(x_2)
         x_2 = F.dropout(x_2, p=self.dropout, training=self.training)
         x_2 = residual + x_2
-        x_2 = self.ffn_layer_norm(x_2)
 
         return x_1, x_2
 
@@ -314,11 +315,13 @@ class Embedding(nn.Module):
         self.lut = nn.Embedding.from_pretrained(
             torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
         self.lut_proj = nn.Linear(self.lut.embedding_dim, args.embed_dim)
+        self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, premise, hypothesis):
         premise = self.lut_proj(self.lut(premise)).transpose(0, 1)
         hypothesis = self.lut_proj(self.lut(hypothesis)).transpose(0, 1)
-
+        premise = self.pe(premise)
+        hypothesis = self.pe(hypothesis)
         return premise, hypothesis
 
 
@@ -330,18 +333,12 @@ class TransformerNLI(nn.Module):
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)
         self.comparison = Comparison(args.embed_dim, args.num_units)
-        self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, x):
         premise, hypothesis = self.embedding(x.premise, x.hypothesis)
-        premise = self.pe(premise)
-        hypothesis = self.pe(hypothesis)
 
         encoding_1 = self.encoder(premise)
         encoding_2 = self.encoder(hypothesis)
-
-        encoding_1 = self.pe(encoding_1)
-        encoding_2 = self.pe(encoding_2)
 
         interaction_1, interaction_2 = self.interaction(encoding_1, encoding_2)
         y = self.comparison(encoding_1, encoding_2, interaction_1, interaction_2)
