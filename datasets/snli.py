@@ -23,7 +23,7 @@ class SNLI():
         if os.path.isfile(vector_cache_loc):
             self.TEXT.vocab.vectors = torch.load(vector_cache_loc)
         else:
-            self.TEXT.vocab.load_vectors(['glove.840B.300d', 'charngram.100d'])
+            self.TEXT.vocab.load_vectors('glove.840B.300d')
             makedirs(os.path.dirname(vector_cache_loc))
             torch.save(self.TEXT.vocab.vectors, vector_cache_loc)
 
