@@ -23,7 +23,7 @@ class Train():
         }
         self.dataset = datasets.__dict__[self.args.dataset](dataset_options)
 
-        self.model = TransformerNLI(self.args, self.dataset.vocab, self.dataset.target_vocab)
+        self.model = TransformerNLI(self.args, self.dataset.vocab, self.dataset.label_vocab)
         print(self.model)
 
         self.model.to(self.device)
@@ -51,7 +51,7 @@ class Train():
         for x, y in tqdm(self.dataset.train_iter):
             premise = x["premise"].cuda(self.device)
             hypothesis = x["hypothesis"].cuda(self.device)
-            label = y["target"].cuda(self.device)
+            label = y["label"].cuda(self.device)
 
             self.opt.zero_grad()
             answer = self.model(premise, hypothesis)
@@ -73,7 +73,7 @@ class Train():
             for x, y in self.dataset.dev_iter:
                 premise = x["premise"].cuda(self.device)
                 hypothesis = x["hypothesis"].cuda(self.device)
-                label = y["target"].cuda(self.device)
+                label = y["label"].cuda(self.device)
                 answer = self.model(premise, hypothesis)
                 loss = self.criterion(answer, label)
 

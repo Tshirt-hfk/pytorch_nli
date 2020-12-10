@@ -42,19 +42,19 @@ class SNLI():
         self.vocab.index_dataset(self.dev, field_name=["premise", "hypothesis"])
         self.vocab.index_dataset(self.test, field_name=["premise", "hypothesis"])
 
-        # 将target转为数字
-        self.target_vocab = Vocabulary(padding=None, unknown=None)
-        self.target_vocab.from_dataset(self.train, field_name=["target"])
-        self.target_vocab.index_dataset(self.train, field_name=["target"])
-        self.target_vocab.index_dataset(self.dev, field_name=["target"])
-        self.target_vocab.index_dataset(self.test, field_name=["target"])
+        # 将label转为数字
+        self.label_vocab = Vocabulary(padding=None, unknown=None)
+        self.label_vocab.from_dataset(self.train, field_name=["label"])
+        self.label_vocab.index_dataset(self.train, field_name=["label"])
+        self.label_vocab.index_dataset(self.dev, field_name=["label"])
+        self.label_vocab.index_dataset(self.test, field_name=["label"])
 
         self.train.set_input("premise", "hypothesis")
-        self.train.set_target("target")
+        self.train.set_target("label")
         self.dev.set_input("premise", "hypothesis")
-        self.dev.set_target("target")
+        self.dev.set_target("label")
         self.test.set_input("premise", "hypothesis")
-        self.test.set_target("target")
+        self.test.set_target("label")
 
         self.train_iter = DataSetIter(dataset=self.train, batch_size=options['batch_size'], sampler=RandomSampler())
         self.dev_iter = DataSetIter(dataset=self.dev, batch_size=options['batch_size'])
@@ -64,10 +64,10 @@ class SNLI():
         return len(self.vocab)
 
     def out_dim(self):
-        return len(self.target_vocab)
+        return len(self.label_vocab)
 
     def labels(self):
-        return self.target_vocab.word2idx
+        return self.label_vocab.word2idx
 
 
 def snli(options):

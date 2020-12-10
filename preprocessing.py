@@ -34,20 +34,20 @@ def preData(path, target_path, lower=True):
     data = {
         "premise": [],
         "hypothesis": [],
-        "target": []
+        "label": []
     }
 
     for sent in tqdm(tokenizer.pipe(sentence1, n_threads=64)):
         data["premise"].append(" ".join([token.orth_ for token in sent]))
     for sent in tqdm(tokenizer.pipe(sentence2, n_threads=64)):
         data["hypothesis"].append(" ".join([token.orth_ for token in sent]))
-    data["target"] = gold_label
+    data["label"] = gold_label
 
     total = 0
     cur = 0
     with open(target_path, "w") as f:
         f.writelines("\t".join(data.keys()) + "\n")
-        for s1, s2, t in zip(data["premise"], data["hypothesis"], data["target"]):
+        for s1, s2, t in zip(data["premise"], data["hypothesis"], data["label"]):
             total += 1
             if t in ["neutral", "entailment", "contradiction"]:
                 cur += 1
