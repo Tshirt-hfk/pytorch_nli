@@ -2,7 +2,6 @@ import time
 import datetime
 import torch.nn as nn
 from torch import optim
-from tqdm import tqdm
 
 import datasets
 from models import TransformerNLI
@@ -48,7 +47,7 @@ class Train():
     def train(self):
         self.model.train()
         n_correct, n_total, n_loss = 0, 0, 0
-        for x, y in tqdm(self.dataset.train_iter):
+        for x, y in self.dataset.train_iter:
             premise = x["premise"].cuda(self.device)
             hypothesis = x["hypothesis"].cuda(self.device)
             label = y["label"].cuda(self.device)
