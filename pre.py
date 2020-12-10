@@ -13,9 +13,6 @@ train_file_target = ".data/snli/train.txt"
 dev_file_target = ".data/snli/dev.txt"
 test_file_target = ".data/snli/test.txt"
 
-vocab_file = ".data/snli/vocab.txt"
-target_file = ".data/snli/target.txt"
-
 
 def preData(path, target_path, lower=True):
     tokenizer = spacy.load("en_core_web_sm")
@@ -56,24 +53,17 @@ def preData(path, target_path, lower=True):
     return data
 
 
-def savePt(obj, path):
-    with open(path, 'wb') as f:
-        pickle.dump(obj, f)
-    return
-
-
-def readPt(path):
-    if not os.path.isfile(path):
-        return None
-    with open(path, 'rb') as f:
-        obj = pickle.load(f)
-    return obj
-
-
-def saveVocab(vocab, path):
-    with open(path, "w") as f:
-        for word, id in vocab:
-            f.writelines(word + "\t" + str(id) + "\n")
+def readData(path):
+    dataset = {}
+    with open(path, "r") as f:
+        lines = f.readlines()
+        headers = lines[0][:-1].split("\t")
+        for header in headers:
+            dataset[header] = []
+        for line in lines[1:]:
+            for header, content in zip(headers, line[:-1].split("\t")):
+                dataset[header].append(content)
+    return DataSet(dataset)
 
 
 def loadDataset():
@@ -82,25 +72,19 @@ def loadDataset():
     test = readData(test_file)
     # 将词建立索引
     vocab = Vocabulary()
-    vocab.from_dataset(train, field_name=titles[0], no_create_entry_dataset=[dev, test])
-    vocab.index_dataset(train, field_name=titles[0])
-    vocab.index_dataset(dev, field_name=titles[0])
-    vocab.index_dataset(test, field_name=titles[0])
+    vocab.from_dataset(train, field_name=["sentence1", "sentence2"], no_create_entry_dataset=[dev, test])
+    vocab.index_dataset(train, field_name=["sentence1", "sentence2"])
+    vocab.index_dataset(dev, field_name=["sentence1", "sentence2"])
+    vocab.index_dataset(test, field_name=["sentence1", "sentence2"])
 
     # 将target转为数字
     target_vocab = Vocabulary(padding=None, unknown=None)
-    target_vocab.from_dataset(train, field_name=titles[1])
-    target_vocab.index_dataset(train, field_name=titles[1])
-    target_vocab.index_dataset(dev, field_name=titles[1])
-    target_vocab.index_dataset(test, field_name=titles[1])
+    target_vocab.from_dataset(train, field_name=["target"])
+    target_vocab.index_dataset(train, field_name=["target"])
+    target_vocab.index_dataset(dev, field_name=["target"])
+    target_vocab.index_dataset(test, field_name=["target"])
 
-    savePt(train, train_file_pt)
-    savePt(dev, dev_file_pt)
-    savePt(test, test_file_pt)
-    saveVocab(vocab, vocab_file)
-    saveVocab(target_vocab, target_file)
-
-    return train, dev, test
+    return train, dev, test, vocab, target_vocab
 
 
 def preSNLI():
