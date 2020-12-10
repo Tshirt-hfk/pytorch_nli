@@ -20,11 +20,11 @@ class Train():
 
         dataset_options = {
             'batch_size': self.args.batch_size,
-            'device': self.device
         }
         self.dataset = datasets.__dict__[self.args.dataset](dataset_options)
 
-        self.model = TransformerNLI(self.args)
+        self.model = TransformerNLI(self.args, self.dataset.vocab, self.dataset.target_vocab)
+        print(self.model)
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
@@ -47,15 +47,18 @@ class Train():
 
     def train(self):
         self.model.train()
-        self.dataset.train_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
-        for batch_idx, batch in tqdm(enumerate(self.dataset.train_iter)):
-            self.opt.zero_grad()
-            answer = self.model(batch)
-            loss = self.criterion(answer, batch.label)
+        for x, y in tqdm(self.dataset.train_iter):
+            premise = x["premise"].cuda(self.device)
+            hypothesis = x["hypothesis"].cuda(self.device)
+            label = y["target"].cuda(self.device)
 
-            n_correct += (torch.max(answer, 1)[1].view(batch.label.size()) == batch.label).sum().item()
-            n_total += batch.batch_size
+            self.opt.zero_grad()
+            answer = self.model(premise, hypothesis)
+            loss = self.criterion(answer, label)
+
+            n_correct += (torch.max(answer, 1)[1].view(label.size()) == label).sum().item()
+            n_total += len(label)
             n_loss += loss.item()
             loss.backward()
             self.opt.step()
@@ -65,15 +68,17 @@ class Train():
 
     def validate(self):
         self.model.eval()
-        self.dataset.dev_iter.init_epoch()
         n_correct, n_total, n_loss = 0, 0, 0
         with torch.no_grad():
-            for batch_idx, batch in enumerate(self.dataset.dev_iter):
-                answer = self.model(batch)
-                loss = self.criterion(answer, batch.label)
+            for x, y in self.dataset.dev_iter:
+                premise = x["premise"].cuda(self.device)
+                hypothesis = x["hypothesis"].cuda(self.device)
+                label = y["target"].cuda(self.device)
+                answer = self.model(premise, hypothesis)
+                loss = self.criterion(answer, label)
 
-                n_correct += (torch.max(answer, 1)[1].view(batch.label.size()) == batch.label).sum().item()
-                n_total += batch.batch_size
+                n_correct += (torch.max(answer, 1)[1].view(label.size()) == label).sum().item()
+                n_total += len(label)
                 n_loss += loss.item()
 
             val_loss = n_loss / n_total

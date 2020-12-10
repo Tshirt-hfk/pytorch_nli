@@ -4,6 +4,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from fastNLP.embeddings import StaticEmbedding, CNNCharEmbedding, StackEmbedding
 from torch.autograd import Variable
 
 from models.utils import LayerNorm
@@ -288,12 +289,12 @@ class PositionalEncoding(nn.Module):
 
 class Comparison(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args, target_vocab):
         super(Comparison, self).__init__()
         self.fc1 = nn.Linear(args.embed_dim * 2, args.embed_dim)
         self.fc2 = nn.Linear(args.embed_dim, args.embed_dim)
         self.fc3 = nn.Linear(args.embed_dim * 2, args.embed_dim)
-        self.fc4 = nn.Linear(args.embed_dim, args.num_units)
+        self.fc4 = nn.Linear(args.embed_dim, len(target_vocab))
 
     def forward(self, encoding_1, encoding_2, interaction_1, interaction_2):
         x_1 = torch.cat([encoding_1, interaction_1], dim=-1)
@@ -311,16 +312,17 @@ class Comparison(nn.Module):
 
 class Embedding(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args, vocab):
         super(Embedding, self).__init__()
-        self.lut = nn.Embedding.from_pretrained(
-            torch.load('.vector_cache/{}_vectors.pt'.format(args.dataset)))
-        self.lut_proj = nn.Linear(self.lut.embedding_dim, args.embed_dim)
+        self.word_embed = StaticEmbedding(vocab, model_dir_or_name='en-glove-6b-300d')
+        self.char_embed = CNNCharEmbedding(vocab, embed_size=50)
+        self.embed = StackEmbedding([self.word_embed, self.char_embed])
+        self.lut_proj = nn.Linear(self.embed.embed_size, args.embed_dim)
         self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, premise, hypothesis):
-        premise = self.lut_proj(self.lut(premise)).transpose(0, 1)
-        hypothesis = self.lut_proj(self.lut(hypothesis)).transpose(0, 1)
+        premise = self.lut_proj(self.embed(premise)).transpose(0, 1)
+        hypothesis = self.lut_proj(self.embed(hypothesis)).transpose(0, 1)
         premise = self.pe(premise)
         hypothesis = self.pe(hypothesis)
         return premise, hypothesis
@@ -328,15 +330,15 @@ class Embedding(nn.Module):
 
 class TransformerNLI(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args, vocab, target_vocab):
         super(TransformerNLI, self).__init__()
-        self.embedding = Embedding(args)
+        self.embedding = Embedding(args, vocab)
         self.encoder = TransformerEncoder(args)
         self.interaction = TransformerInteraction(args)
-        self.comparison = Comparison(args)
+        self.comparison = Comparison(args, target_vocab)
 
-    def forward(self, x):
-        premise, hypothesis = self.embedding(x.premise, x.hypothesis)
+    def forward(self, premise, hypothesis):
+        premise, hypothesis = self.embedding(premise, hypothesis)
 
         encoding_1 = self.encoder(premise)
         encoding_2 = self.encoder(hypothesis)
