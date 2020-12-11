@@ -314,7 +314,7 @@ class Embedding(nn.Module):
 
     def __init__(self, args, vocab):
         super(Embedding, self).__init__()
-        word_embed = StaticEmbedding(vocab, model_dir_or_name='en-glove-840b-300d',
+        word_embed = StaticEmbedding(vocab, model_dir_or_name='en-glove-840b-300d', min_freq=2,
                                      requires_grad=False, only_use_pretrain_word=True)
         char_embed = CNNCharEmbedding(vocab, embed_size=30)
         self.embed = StackEmbedding([word_embed, char_embed])
