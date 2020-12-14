@@ -8,6 +8,10 @@ from models import TransformerNLI
 
 from utils import *
 
+import global_value as gol
+
+gol._init()
+
 
 class Train():
     def __init__(self):
@@ -88,6 +92,7 @@ class Train():
         print(" [*] Training starts!")
         print('-' * 99)
         for epoch in range(1, self.args.epochs + 1):
+            gol.set_value("epoch", epoch)
             start = time.time()
 
             train_loss, train_acc = self.train()
