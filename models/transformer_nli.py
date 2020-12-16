@@ -10,6 +10,7 @@ from torch.autograd import Variable
 from models.utils import LayerNorm
 import global_value as gol
 
+
 class MultiHeadedAttention(nn.Module):
     def __init__(self, embed_dim, num_heads, k_dim=None, v_dim=None, bias=True, dropout=0.0):
         super(MultiHeadedAttention, self).__init__()
@@ -67,16 +68,16 @@ class MultiHeadedAttention(nn.Module):
             mask = mask.unsqueeze(0)
             attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
 
-        d = math.log(99)
-        if self.training:
-            noise = -torch.empty_like(attn_weights).exponential_().log()
-            attn_weights_noise = attn_weights + noise
-            attn_weights_max = attn_weights_noise.max(dim=-1, keepdim=True)[0]
-            mask = attn_weights_noise < (attn_weights_max - d)
-        else:
-            attn_weights_max = attn_weights.max(dim=-1, keepdim=True)[0]
-            mask = attn_weights < (attn_weights_max - d)
-        attn_weights = attn_weights.masked_fill(mask, float("-inf"))
+        # d = math.log(99)
+        # if self.training:
+        #     noise = -torch.empty_like(attn_weights).exponential_().log()
+        #     attn_weights_noise = attn_weights + noise
+        #     attn_weights_max = attn_weights_noise.max(dim=-1, keepdim=True)[0]
+        #     mask = attn_weights_noise < (attn_weights_max - d)
+        # else:
+        #     attn_weights_max = attn_weights.max(dim=-1, keepdim=True)[0]
+        #     mask = attn_weights < (attn_weights_max - d)
+        # attn_weights = attn_weights.masked_fill(mask, float("-inf"))
 
         attn_weights = torch.softmax(attn_weights, dim=-1)
         attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
@@ -258,11 +259,12 @@ class TransformerInteraction(nn.Module):
                 attention_dropout=args.attention_dropout,
                 activation_dropout=args.activation_dropout,
                 dropout=args.dropout))
+        self.last_layer_norm = LayerNorm(args.embed_dim)
 
     def forward(self, x_1, x_2):
         for i in range(self.M):
             x_1, x_2 = self.decoder_list[i](x_1, x_2)
-        return x_1, x_2
+        return self.last_layer_norm(x_1), self.last_layer_norm(x_2)
 
 
 class PositionalEncoding(nn.Module):
