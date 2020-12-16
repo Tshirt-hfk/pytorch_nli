@@ -319,7 +319,7 @@ class Embedding(nn.Module):
                                      requires_grad=False, only_use_pretrain_word=True)
         # char_embed = CNNCharEmbedding(vocab, embed_size=30)
         self.embed = StackEmbedding([word_embed])
-        self.lut_proj = nn.Linear(self.embed.embed_size, args.embed_dim)
+        self.lut_proj = nn.Linear(self.embed.embed_size, args.embed_dim, bias=False)
         self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
     def forward(self, premise, hypothesis):
