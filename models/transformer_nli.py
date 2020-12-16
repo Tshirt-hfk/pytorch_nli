@@ -322,12 +322,10 @@ class Embedding(nn.Module):
         self.lut_proj = nn.Linear(self.embed.embed_size, args.embed_dim, bias=False)
         self.pe = PositionalEncoding(args.embed_dim, args.dropout)
 
-    def forward(self, premise, hypothesis):
-        premise = self.lut_proj(self.embed(premise)).transpose(0, 1)
-        hypothesis = self.lut_proj(self.embed(hypothesis)).transpose(0, 1)
-        premise = self.pe(premise)
-        hypothesis = self.pe(hypothesis)
-        return premise, hypothesis
+    def forward(self, x):
+        x = self.lut_proj(self.embed(x)).transpose(0, 1)
+        x = self.pe(x)
+        return x
 
 
 class TransformerNLI(nn.Module):
@@ -340,7 +338,8 @@ class TransformerNLI(nn.Module):
         self.comparison = Comparison(args, label_vocab)
 
     def forward(self, premise, hypothesis):
-        premise, hypothesis = self.embedding(premise, hypothesis)
+        premise = self.embedding(premise)
+        hypothesis = self.embedding(hypothesis)
 
         encoding_1 = self.encoder(premise)
         encoding_2 = self.encoder(hypothesis)
