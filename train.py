@@ -27,7 +27,6 @@ class Train():
         self.dataset = datasets.__dict__[self.args.dataset](dataset_options)
 
         self.model = TransformerNLI(self.args, self.dataset.vocab, self.dataset.label_vocab)
-        print(self.model)
 
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
