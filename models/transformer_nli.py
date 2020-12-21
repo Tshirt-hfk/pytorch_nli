@@ -71,7 +71,7 @@ class MultiHeadedAttention(nn.Module):
         epoch = gol.get_value("epoch")
         epoch = 40 if epoch is None else epoch
         epoch = 40 if epoch > 40 else epoch
-        d = math.log(1000/epoch-1)
+        d = math.log(2000/epoch-1)
         if self.training:
             noise = -torch.empty_like(attn_weights).exponential_().log()
             attn_weights_noise = attn_weights + noise
