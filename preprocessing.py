@@ -12,7 +12,7 @@ dev_file_target = ".data/snli/dev.txt"
 test_file_target = ".data/snli/test.txt"
 
 
-def preData(path, target_path, lower=True):
+def preData(path, target_path, lower=False):
     tokenizer = spacy.load("en_core_web_sm")
     sentence1 = []
     sentence2 = []
